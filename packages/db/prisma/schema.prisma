@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PRESIDENT
+  VICE_PRESIDENT
+  TRESORIER
+  SECRETAIRE
+  EVENT_LEAD
+  COMMS_LEAD
+  MEMBER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  PENDING
+  INACTIVE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum EventVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum TicketStatus {
+  RESERVED
+  PAID
+  CHECKED_IN
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum PaymentProvider {
+  STRIPE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+
+  // Relations
+  roles         UserRole[]
+  memberships   Membership[]
+  tickets       Ticket[]
+  duePayments   DuePayment[]
+  payments      Payment[]
+  auditLogs     AuditLog[]   @relation("ActorUser")
+
+  @@map("users")
+}
+
+model UserRole {
+  id     String  @id @default(cuid())
+  userId String
+  role   Role
+  scope  String? // global or eventId
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role, scope])
+  @@map("user_roles")
+}
+
+model Membership {
+  id      String           @id @default(cuid())
+  userId  String
+  status  MembershipStatus
+  startAt DateTime
+  endAt   DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("memberships")
+}
+
+model Event {
+  id          String          @id @default(cuid())
+  title       String
+  slug        String          @unique
+  description String?
+  location    String
+  startAt     DateTime
+  endAt       DateTime
+  capacity    Int?
+  status      EventStatus     @default(DRAFT)
+  visibility  EventVisibility @default(PUBLIC)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  ticketTypes TicketType[]
+  tickets     Ticket[]
+  payments    Payment[]
+
+  @@map("events")
+}
+
+model TicketType {
+  id         String  @id @default(cuid())
+  eventId    String
+  name       String
+  priceCents Int
+  quota      Int?
+  memberOnly Boolean @default(false)
+
+  // Relations
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+
+  @@map("ticket_types")
+}
+
+model Ticket {
+  id           String       @id @default(cuid())
+  code         String       @unique @default(cuid())
+  eventId      String
+  userId       String?
+  ticketTypeId String
+  purchasedAt  DateTime?
+  checkedInAt  DateTime?
+  status       TicketStatus @default(RESERVED)
+  createdAt    DateTime     @default(now())
+
+  // Relations
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
+  @@map("tickets")
+}
+
+model Due {
+  id          String   @id @default(cuid())
+  season      String
+  amountCents Int
+  dueDate     DateTime
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  payments DuePayment[]
+
+  @@map("dues")
+}
+
+model DuePayment {
+  id        String        @id @default(cuid())
+  dueId     String
+  userId    String
+  paymentId String?
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  due     Due      @relation(fields: [dueId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([dueId, userId])
+  @@map("due_payments")
+}
+
+model Payment {
+  id           String          @id @default(cuid())
+  userId       String?
+  eventId      String?
+  amountCents  Int
+  currency     String          @default("EUR")
+  provider     PaymentProvider
+  providerRef  String?
+  status       PaymentStatus   @default(PENDING)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  event       Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  duePayments DuePayment[]
+
+  @@map("payments")
+}
+
+model Announcement {
+  id        String    @id @default(cuid())
+  title     String
+  body      String
+  targets   Json      @default("[]")
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("announcements")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  action       String
+  entityType   String
+  entityId     String
+  metadata     Json     @default("{}")
+  ip           String?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  actorUser User? @relation("ActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
