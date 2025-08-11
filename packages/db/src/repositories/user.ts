@@ -1,4 +1,4 @@
-import { prisma } from "./client";
+import { prisma } from "../client";
 import { CreateUserInput, UpdateUserInput, Role } from "@gestion-ucl/core";
 
 export class UserRepository {
@@ -149,6 +149,6 @@ export class UserRepository {
     const userRoles = await prisma.userRole.findMany({
       where: { userId },
     });
-    return userRoles.map((ur) => ur.role);
+    return userRoles.map((ur: any) => ur.role);
   }
 }

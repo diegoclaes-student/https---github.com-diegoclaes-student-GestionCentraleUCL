@@ -35,7 +35,7 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9 -]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
-    .trim("-");
+    .replace(/^-+|-+$/g, ""); // Remove leading and trailing dashes
 }
 
 export function generateId(): string {
