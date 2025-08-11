@@ -1,0 +1,39 @@
+# Temporary files
+requirements.txt
+instruction.txt
+
+# Development environment files
+.env
+.env.local
+
+# Dependencies
+node_modules/
+__pycache__/
+vendor/
+
+# Build outputs
+dist/
+build/
+static/
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
