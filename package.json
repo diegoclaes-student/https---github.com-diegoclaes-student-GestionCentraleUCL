@@ -1,0 +1,31 @@
+{
+  "name": "gestion-centrale-ucl",
+  "version": "1.0.0",
+  "description": "Student Association Management System - A comprehensive web application for managing student associations",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "test": "cd server && npm test && cd ../client && npm test",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down"
+  },
+  "keywords": [
+    "student-association",
+    "management",
+    "web-app",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "UCL Student Management Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
